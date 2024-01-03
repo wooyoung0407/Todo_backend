@@ -1,19 +1,23 @@
 import express from "express";
+import cors from "cors";
 
 const app = express();
-const port = 3000;
+
+const corsOptions = {
+  origin: "https://cdpn.io",
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-app.get("/about", (req, res) => {
-  res.send("About!");
+app.get("/todos", (req, res) => {
+  res.json([{id:1},{id:2}]);
 });
 
-app.get("/setting", (req, res) => {
-  res.send("Setting!");
-});
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
