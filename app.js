@@ -1,7 +1,19 @@
 import express from "express";
 import cors from "cors";
+import mysql from "mysql2/promise";
+
+const pool = mysql.createPool({
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "todo_backend",
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+});
 
 const app = express();
+const port = 3000;
 
 const corsOptions = {
   origin: "https://cdpn.io",
@@ -10,12 +22,10 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
+app.get("/todos", async (req, res) => {
+  const [rows] = await pool.query("SELECT * FROM todo ORDER BY id DESC");
 
-app.get("/todos", (req, res) => {
-  res.json([{id:1},{id:2}]);
+  res.json(rows);
 });
 
 
