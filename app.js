@@ -2,6 +2,10 @@ import express from "express";
 import cors from "cors";
 import mysql from "mysql2/promise";
 
+
+const app = express();
+const port = 3000;
+
 const pool = mysql.createPool({
   host: "localhost",
   user: "root",
@@ -13,8 +17,6 @@ const pool = mysql.createPool({
   dateStrings: true,
 });
 
-const app = express();
-const port = 3000;
 
 const corsOptions = {
   origin: "https://cdpn.io",
@@ -23,6 +25,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+
+
 // 조회
 app.get("/:user_code/todos", async (req, res) => {
   const { user_code } = req.params;
@@ -104,7 +108,7 @@ app.delete("/:user_code/todos/:no", async (req, res) => {
 
   res.json({
     resultCode: "S-1",
-    msg: `{no}번 할일을 삭제하였습니다.`,
+    msg: `${no}번 할일을 삭제하였습니다.`,
   });
 });
 
@@ -168,6 +172,7 @@ app.post("/:user_code/todos", async (req, res) => {
     data: justCreatedTodoRow,
   });
 });
+
 //수정
 app.patch("/:user_code/todos/:no", async (req, res) => {
   const { user_code, no } = req.params;
@@ -183,6 +188,7 @@ app.patch("/:user_code/todos/:no", async (req, res) => {
     `,
     [user_code, no]
   );
+
   await pool.query(
     `
     UPDATE todo
