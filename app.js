@@ -22,10 +22,10 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
+app.use(express.json());
 
 app.get("/:user_code/todos", async (req, res) => {
-  const {user_code} = req.params;
+  const { user_code } = req.params;
 
   const [rows] = await pool.query(
     `
@@ -40,13 +40,12 @@ app.get("/:user_code/todos", async (req, res) => {
   res.json({
     resultCode: "S-1",
     msg: "성공",
-    data: rows
+    data: rows,
   });
 });
 
-
 app.get("/:user_code/todos/:no", async (req, res) => {
-  const {user_code , no} = req.params;
+  const { user_code, no } = req.params;
   const [[todoRow]] = await pool.query(
     `
     SELECT *
@@ -54,10 +53,10 @@ app.get("/:user_code/todos/:no", async (req, res) => {
     WHERE user_code =?
     AND no = ?
     `,
-    [user_code,no]
+    [user_code, no]
   );
 
-  if(todoRow === undefined){
+  if (todoRow === undefined) {
     res.status(404).json({
       resultCode: "F-1",
       msg: "실패",
@@ -73,7 +72,7 @@ app.get("/:user_code/todos/:no", async (req, res) => {
 });
 
 app.delete("/:user_code/todos/:no", async (req, res) => {
-  const {user_code , no} = req.params;
+  const { user_code, no } = req.params;
   const [[todoRow]] = await pool.query(
     `
     SELECT *
@@ -81,10 +80,10 @@ app.delete("/:user_code/todos/:no", async (req, res) => {
     WHERE user_code =?
     AND no = ?
     `,
-    [user_code,no]
+    [user_code, no]
   );
 
-  if(todoRow === undefined){
+  if (todoRow === undefined) {
     res.status(404).json({
       resultCode: "F-1",
       msg: "실패",
@@ -98,7 +97,7 @@ app.delete("/:user_code/todos/:no", async (req, res) => {
     WHERE user_code =?
     AND no = ?
     `,
-    [user_code,no]
+    [user_code, no]
   );
 
   res.json({
@@ -107,32 +106,65 @@ app.delete("/:user_code/todos/:no", async (req, res) => {
   });
 });
 
-app.post("/todos", async (req, res) => {
-  const {content} = req.body;
+app.post("/:user_code/todos", async (req, res) => {
+  const { user_code } = req.params;
+  const { content, perform_date } = req.body;
 
-  if(!content){
-    res.status(400).json({
-      msg: "content required"
-    })
+  if (!content) {
+    res.status(400)({
+      resultCode: "F-1",
+      msg: "내용없음",
+    });
     return;
   }
+  if (!perform_date) {
+    res.status(400)({
+      resultCode: "F-1",
+      msg: "생성일이 없다.",
+    });
+    return;
+  }
+  const [[lastTodoRow]] = await pool.query(
+    `
+    SELECT *
+    FROM todo
+    WHERE user_code =?
+    ORDER BY id DESC
+    LIMIT 1
+    `,
+    [user_code]
+  );
 
-  const [rs] = await pool.query(
+  const no = lastTodoRow?.no + 1 || 1;
+
+  const [insertTodoRow] = await pool.query(
     `
     INSERT INTO todo
     SET reg_date = NOW(),
     update_date = NOW(),
-    perform_date = NOW(),
+    user_code = ?,
+    no = ?,
     content = ?,
+    perform_date =?
     `,
-    [content]
+    [user_code, no, content, perform_date]
   );
 
-  res.status(201).json({
-    id: rs.insertId,
+  const [[justCreatedTodoRow]] = await pool.query(
+    `
+    SELECT *
+    FROM todo
+    WHERE id = ?
+    `,
+    [insertTodoRow.insertId]
+  );
+
+  res.json({
+    resultCode: "S-1",
+    msg: `${justCreatedTodoRow.id}번 할일을 삭제하였습니다.`,
+    data : justCreatedTodoRow,
   });
 });
-
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
