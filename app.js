@@ -10,6 +10,7 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  dateStrings: true,
 });
 
 const app = express();
@@ -22,23 +23,79 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.get("/todos", async (req, res) => {
-  const [rows] = await pool.query("SELECT * FROM todo ORDER BY id DESC");
 
-  res.json(rows);
+app.get("/:user_code/todos", async (req, res) => {
+  const {user_code} = req.params;
+
+  const [rows] = await pool.query(
+    `
+    SELECT *
+    FROM todo
+    WHERE user_code = ?
+    ORDER BY id DESC
+    `,
+    [user_code]
+  );
+
+  res.json({
+    resultCode: "S-1",
+    msg: "성공",
+    data: rows
+  });
 });
-app.get("/todos/:id", async (req, res) => {
-  const { id } = req.params;
-  const [rows] = await pool.query("SELECT * FROM todo WHERE id = ?", [
-    id,
-  ]);
 
-  if(rows.length==0){
-    res.status(404).send('not found');
+
+app.get("/:user_code/todos/:no", async (req, res) => {
+  const {user_code , no} = req.params;
+  const [[todoRow]] = await pool.query(
+    `
+    SELECT *
+    FROM todo
+    WHERE user_code =?
+    AND no = ?
+    `,
+    [user_code,no]
+  );
+
+  if(todoRow === undefined){
+    res.status(404).json({
+      resultCode: "F-1",
+      msg: "실패",
+    });
     return;
   }
 
-  res.json(rows[0]);
+  res.json({
+    resultCode: "S-1",
+    msg: "성공",
+    data: todoRow,
+  });
+});
+
+app.post("/todos", async (req, res) => {
+  const {content} = req.body;
+
+  if(!content){
+    res.status(400).json({
+      msg: "content required"
+    })
+    return;
+  }
+
+  const [rs] = await pool.query(
+    `
+    INSERT INTO todo
+    SET reg_date = NOW(),
+    update_date = NOW(),
+    perform_date = NOW(),
+    content = ?,
+    `,
+    [content]
+  );
+
+  res.status(201).json({
+    id: rs.insertId,
+  });
 });
 
 
