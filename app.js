@@ -43,6 +43,7 @@ app.get("/:user_code/todos", async (req, res) => {
     data: rows,
   });
 });
+
 // 단건조회
 app.get("/:user_code/todos/:no", async (req, res) => {
   const { user_code, no } = req.params;
@@ -70,6 +71,7 @@ app.get("/:user_code/todos/:no", async (req, res) => {
     data: todoRow,
   });
 });
+
 // 삭제
 app.delete("/:user_code/todos/:no", async (req, res) => {
   const { user_code, no } = req.params;
@@ -105,6 +107,7 @@ app.delete("/:user_code/todos/:no", async (req, res) => {
     msg: `{no}번 할일을 삭제하였습니다.`,
   });
 });
+
 // 업데이트
 app.post("/:user_code/todos", async (req, res) => {
   const { user_code } = req.params;
@@ -161,7 +164,7 @@ app.post("/:user_code/todos", async (req, res) => {
 
   res.json({
     resultCode: "S-1",
-    msg: `${justCreatedTodoRow.id}번 할일을 삭제하였습니다.`,
+    msg: `${justCreatedTodoRow.id}번 할일을 생성하였습니다.`,
     data: justCreatedTodoRow,
   });
 });
@@ -191,7 +194,7 @@ app.patch("/:user_code/todos/:no", async (req, res) => {
     `,
     [content, perform_date, user_code, no]
   );
-  
+
   const [[justModifiedTodoRow]] = await pool.query(
     `
     SELECT *
